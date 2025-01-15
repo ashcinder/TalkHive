@@ -819,6 +819,7 @@ func BlockChat(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "用户注销"})
 		return
 	}
+
 	var input struct {
 		Tid       uint `json:"tid"`
 		IsBlocked bool `json:"is_blocked"`
@@ -828,7 +829,7 @@ func BlockChat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Json绑定失败"})
 		return
 	}
-
+	fmt.Println("input:", input)
 	if input.IsGroup {
 		var group models.GroupChatInfo
 		if err := global.Db.Where("group_id = ?", input.Tid).First(&group).Error; err != nil {
@@ -841,6 +842,7 @@ func BlockChat(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "Contacts表中无此条记录"})
 		}
 		contact.IsBlocked = input.IsBlocked
+
 		if err := global.Db.Updates(&contact).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "更新失败"})
 			return
@@ -859,11 +861,14 @@ func BlockChat(c *gin.Context) {
 		if err := global.Db.Where("owner_id = ? AND contact_id = ? AND is_group_chat = ?", me.AccountID, other.AccountID, input.IsGroup).First(&contact).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "Contacts表中无此条记录"})
 		}
+		fmt.Println("contact:", contact)
 		contact.IsBlocked = input.IsBlocked
 		if err := global.Db.Updates(&contact).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "更新失败"})
 			return
 		}
+		fmt.Println("updated contact:", contact)
+
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "消息状态更新成功"})
 }
